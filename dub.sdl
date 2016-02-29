@@ -1,0 +1,5 @@
+name "ohm"
+description "An easy study of Actor-Model in D."
+copyright "Copyright © 2016, cedretaber"
+authors "cedretaber"
+license "MIT"
