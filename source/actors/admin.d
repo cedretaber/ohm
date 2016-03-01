@@ -16,9 +16,9 @@ void pingPong(Tid owner, Tid writer)
 	while(loop)
 	{
 		receive(
-				(immutable ReadMessage message) { with(message) if(msg == "ping") writer.send(new immutable(WritingMessage)("pong!")); },
-				(Tid tid, Terminate t) { if(tid == owner) loop = false; }
+			(immutable ReadMessage message) { with(message) if(msg == "ping") writer.send(new immutable(WritingMessage)("pong!")); },
+			(Tid tid, Terminate t) { if(tid == owner) loop = false; }
 		);
 	}
-	owner.send(thisTid, Terminated.T);
+	owner.send(thisTid, TERMINATED);
 }

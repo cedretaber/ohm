@@ -17,21 +17,21 @@ void main()
 	while(loop)
 	{
 		receive(
-				(immutable ReadMessage message) {
-					with(message)
+			(immutable ReadMessage message) {
+				with(message)
+				{
+					if(msg == "exit" || msg == "quit")
+						loop = false;
+					else
 					{
-						if(msg == "exit" || msg == "quit")
-							loop = false;
-						else
-						{
-							reader.send(thisTid);
-							pp.send(message);
-						}
+						reader.send(thisTid);
+						pp.send(message);
 					}
 				}
+			}
 		);
 	}
-	hts.each!(h => h.send(thisTid, Terminate.T));
+	hts.each!(h => h.send(thisTid, TERMINATE));
 
 	auto ct = 3;
 	while(ct)
@@ -41,5 +41,8 @@ void main()
 	}
 }
 
-enum Terminate { T }
-enum Terminated { T }
+struct Terminate {}
+enum TERMINATE = Terminate();
+
+struct Terminated {}
+enum TERMINATED = Terminated();

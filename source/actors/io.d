@@ -10,11 +10,11 @@ void ioWriter(Tid owner)
 	while(loop)
 	{
 		receive(
-				(immutable WritingMessage msg) { writeln(msg.msg); },
-				(Tid tid, Terminate t) { if(tid == owner) loop = false; }
+			(immutable WritingMessage msg) { writeln(msg.msg); },
+			(Tid tid, Terminate t) { if(tid == owner) loop = false; }
 		);
 	}
-	owner.send(thisTid, Terminated.T);
+	owner.send(thisTid, TERMINATED);
 }
 
 void ioReader(Tid owner)
@@ -27,12 +27,12 @@ void ioReader(Tid owner)
 		while(innerLoop)
 		{
 			receive(
-					(Tid tid) { if(tid == owner) innerLoop = false; },
-					(Tid tid, Terminate t) { if(tid == owner) loop = innerLoop = false; }
+				(Tid tid) { if(tid == owner) innerLoop = false; },
+				(Tid tid, Terminate t) { if(tid == owner) loop = innerLoop = false; }
 			);
 		}
 	}
-	owner.send(thisTid, Terminated.T);
+	owner.send(thisTid, TERMINATED);
 }
 
 immutable abstract
