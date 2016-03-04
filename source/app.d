@@ -6,12 +6,10 @@ import ohm.actors.io, ohm.actors.admin;
 
 void main()
 {
-	auto writer = spawn(&ioWriter, thisTid);
-	auto reader = spawn(&ioReader, thisTid);
+	auto ioHolder = spawn(&ioHolder, thisTid);
+	auto pp = spawn(&pingPong, thisTid, ioHolder);
 
-	auto pp = spawn(&pingPong, thisTid, writer);
-
-	auto hts = [writer, reader, pp];
+	auto hts = [ioHolder, pp];
 
 	auto loop = true;
 	while(loop)
@@ -24,21 +22,21 @@ void main()
 						loop = false;
 					else
 					{
-						reader.send(thisTid);
+						ioHolder.send(thisTid, READCONTINUE);
 						pp.send(message);
 					}
 				}
 			}
 		);
 	}
-	hts.each!(h => h.send(thisTid, TERMINATE));
 
-	auto ct = 3;
-	while(ct)
-	{
-		auto tid = receiveOnly!(Tid, Terminated)[0];
-		if(hts.any!(h => h == tid)) --ct;
-	}
+	bool[Tid] states;
+	hts.each!((h) {
+		h.send(thisTid, TERMINATE);
+		states[h] = true;
+	});
+	while(states.values.any)
+		receive((Tid tid, Terminated _t) { states[tid] = false; });
 }
 
 struct Terminate {}

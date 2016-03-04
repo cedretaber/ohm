@@ -1,8 +1,37 @@
 module ohm.actors.io;
 
-import std.stdio, std.string, std.concurrency;
+import std.stdio, std.string, std.concurrency, std.algorithm.searching, std.algorithm.iteration;
 
 import ohm.app;
+
+void ioHolder(Tid owner)
+{
+	auto writer = spawn(&ioWriter, thisTid);
+	auto reader = spawn(&ioReader, thisTid);
+
+	auto loop = true;
+	while(loop)
+	{
+		receive(
+			(immutable WritingMessage msg) { writer.send(msg); },
+			(immutable ReadMessage msg) { owner.send(msg); },
+			(Tid tid, ReadContinue readContinue) { if(tid == owner) reader.send(thisTid); },
+			(Tid tid, Terminate terminate) {
+				if(tid == owner)
+				{
+					writer.send(thisTid, terminate);
+					reader.send(thisTid, terminate);
+					loop = false;
+				}
+			}
+		);
+	}
+
+	auto children = [writer: true, reader: true];
+	while(children.values.any)
+		receive((Tid tid, Terminated _t) { children[tid] = false; });
+	owner.send(thisTid, TERMINATED);
+}
 
 void ioWriter(Tid owner)
 {
@@ -62,3 +91,6 @@ class ReadMessage : IOMessage
 {
 	mixin Constractors;
 }
+
+struct ReadContinue {}
+enum READCONTINUE = ReadContinue();
