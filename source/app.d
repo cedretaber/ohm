@@ -9,11 +9,7 @@ void main()
 	auto ioHolder = spawn(&ioHolder, thisTid);
 	auto pp = spawn(&pingPong, thisTid, ioHolder);
 
-	auto hts = [ioHolder, pp];
-
-	auto loop = true;
-	while(loop)
-	{
+	for(auto loop = true; loop;)
 		receive(
 			(immutable ReadMessage message) {
 				with(message)
@@ -28,15 +24,9 @@ void main()
 				}
 			}
 		);
-	}
 
-	bool[Tid] states;
-	hts.each!((h) {
-		h.send(thisTid, TERMINATE);
-		states[h] = true;
-	});
-	while(states.values.any)
-		receive((Tid tid, Terminated _t) { states[tid] = false; });
+	auto hts = [ioHolder, pp];
+	hts.each!(h => h.prioritySend(thisTid, TERMINATE));
 }
 
 struct Terminate {}
