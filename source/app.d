@@ -7,7 +7,7 @@ import ohm.actors.io, ohm.actors.admin;
 void main()
 {
 	auto ioHolder = spawn(&ioHolder, thisTid);
-	auto pp = spawn(&pingPong, thisTid, ioHolder);
+	auto actorsAdmin = spawn(&actorsAdmin, thisTid, ioHolder);
 
 	for(auto loop = true; loop;)
 		receive(
@@ -19,18 +19,14 @@ void main()
 					else
 					{
 						ioHolder.send(thisTid, READCONTINUE);
-						pp.send(message);
+						actorsAdmin.send(message);
 					}
 				}
 			}
 		);
 
-	auto hts = [ioHolder, pp];
-	hts.each!(h => h.prioritySend(thisTid, TERMINATE));
+	[ioHolder, actorsAdmin].each!(h => h.prioritySend(thisTid, TERMINATE));
 }
 
 struct Terminate {}
 enum TERMINATE = Terminate();
-
-struct Terminated {}
-enum TERMINATED = Terminated();

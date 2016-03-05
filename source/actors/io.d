@@ -38,7 +38,7 @@ void ioReader(Tid owner)
 {
 	for(auto loop = true; loop;)
 	{
-		owner.send(new immutable(ReadMessage)(readln.chomp));
+		owner.send(ReadMessage.make(readln.chomp));
 		for(auto innerLoop = true; innerLoop;)
 			receive(
 				(Tid tid, ReadContinue _r) {if(tid == owner) innerLoop = false;},
@@ -54,14 +54,14 @@ template Constractors()
 {
 	string msg;
 
-	this(string msg)
+	this(string msg = "")
 	{
 		this.msg = msg;
 	}
 
-	this()
+	static auto make(string msg)
 	{
-		this("");
+		return new immutable(typeof(this))(msg);
 	}
 }
 
