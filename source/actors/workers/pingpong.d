@@ -6,12 +6,12 @@ import ohm.app, ohm.actors.io, ohm.actors.admin;
 
 void pingPong(Tid owner, Tid ioHolder)
 {
-	for(auto loop = true; loop;)
-		receive(
-			(Tid tid, RunCommand _rc) { if(tid == ownerTid) ioHolder.send(WritingMessage.make("pong!")); },
-			(Tid tid, Terminate _t) { if(tid == owner) loop = false; },
-			(Variant any) {}
-		);
+    for(auto loop = true; loop;)
+        receive(
+            (Tid tid, RunCommand _rc) { if(tid == ownerTid) ioHolder.send(WritingMessage.make("pong!")); },
+            (Tid tid, Terminate _t) { if(tid == owner) loop = false; },
+            (Variant any) {}
+        );
 }
 
 void countWorker(Tid owner, Tid writer) {}

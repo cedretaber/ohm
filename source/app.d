@@ -6,26 +6,26 @@ import ohm.actors.io, ohm.actors.admin;
 
 void main()
 {
-	auto ioHolder = spawn(&ioHolder, thisTid);
-	auto actorsAdmin = spawn(&actorsAdmin, thisTid, ioHolder);
+    auto ioHolder = spawn(&ioHolder, thisTid);
+    auto actorsAdmin = spawn(&actorsAdmin, thisTid, ioHolder);
 
-	for(auto loop = true; loop;)
-		receive(
-			(immutable ReadMessage message) {
-				with(message)
-				{
-					if(msg == "exit" || msg == "quit")
-						loop = false;
-					else
-					{
-						ioHolder.send(thisTid, READCONTINUE);
-						actorsAdmin.send(message);
-					}
-				}
-			}
-		);
+    for(auto loop = true; loop;)
+        receive(
+            (immutable ReadMessage message) {
+                with(message)
+                {
+                    if(msg == "exit" || msg == "quit")
+                        loop = false;
+                    else
+                    {
+                        ioHolder.send(thisTid, READCONTINUE);
+                        actorsAdmin.send(message);
+                    }
+                }
+            }
+        );
 
-	[ioHolder, actorsAdmin].each!(h => h.prioritySend(thisTid, TERMINATE));
+    [ioHolder, actorsAdmin].each!(h => h.prioritySend(thisTid, TERMINATE));
 }
 
 struct Terminate {}

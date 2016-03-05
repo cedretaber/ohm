@@ -15,92 +15,92 @@ alias Capt = Captures!(string, size_t);
 
 void actorsAdmin(Tid owner, Tid ioHolder)
 {
-	auto workers = [
-		"ping": spawn(&pingPong, thisTid, ioHolder),
-		"count": spawn(&countWorker, thisTid, ioHolder),
-		"timer": spawn(&timerWorker, thisTid, ioHolder)
-	];
+        auto workers = [
+                "ping": spawn(&pingPong, thisTid, ioHolder),
+                "count": spawn(&countWorker, thisTid, ioHolder),
+                "timer": spawn(&timerWorker, thisTid, ioHolder)
+        ];
 
-	void receiveMessage(string msg)
-	{
-		bool isKeywordOrDeleteIfExist(string com)
-		{
-			if(keywords.find(com)) return true;
+    void receiveMessage(string msg)
+    {
+        bool isKeywordOrDeleteIfExist(string com)
+        {
+            if(keywords.find(com)) return true;
 
-			auto tid = (com in workers);
-			if(tid !is null)
-			{
-				workers.remove(com);
-				(*tid).prioritySend(thisTid, TERMINATE);
-			}
-			return false;
-		}
+            auto tid = (com in workers);
+            if(tid !is null)
+            {
+                workers.remove(com);
+                (*tid).prioritySend(thisTid, TERMINATE);
+            }
+            return false;
+        }
 
-		[
-			tuple(setState, (Capt c) {
-				auto com = c[1];
-				if(isKeywordOrDeleteIfExist(com)) return;
+        [
+            tuple(setState, (Capt c) {
+                auto com = c[1];
+                if(isKeywordOrDeleteIfExist(com)) return;
 
-				workers[com] = spawn(
-					(Tid owner, Tid ioHolder, string msg) {
-						for(auto loop = true; loop;)
-							receive(
-								(Tid tid, RunCommand _rc) { if(tid == owner) ioHolder.send(WritingMessage.make(msg)); },
-								(Tid tid, Terminate _t) { if(tid == owner) loop = false; },
-								(Variant any) {}
-							);
-						},
-						thisTid, ioHolder, c[2]
-					);
-			}),
-			tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
-			tuple(commandState1, (Capt c) {
-				auto com = c.hit;
-				auto tid = (com in workers);
-				if(tid !is null) (*tid).send(thisTid, RUNCOMMAND);
-			}),
-			tuple(commandState2, (Capt c) {
-				auto com = c[1];
-				auto arg = c[2];
+                workers[com] = spawn(
+                    (Tid owner, Tid ioHolder, string msg) {
+                        for(auto loop = true; loop;)
+                            receive(
+                                (Tid tid, RunCommand _rc) { if(tid == owner) ioHolder.send(WritingMessage.make(msg)); },
+                                (Tid tid, Terminate _t) { if(tid == owner) loop = false; },
+                                (Variant any) {}
+                            );
+                    },
+                    thisTid, ioHolder, c[2]
+                );
+            }),
+            tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
+            tuple(commandState1, (Capt c) {
+                auto com = c.hit;
+                auto tid = (com in workers);
+                if(tid !is null) (*tid).send(thisTid, RUNCOMMAND);
+            }),
+            tuple(commandState2, (Capt c) {
+                auto com = c[1];
+                auto arg = c[2];
 
-				auto tid = (com in workers);
-				if(tid !is null) (*tid).send(WorkersArgument.make(arg));
-			})
-		].each!((tup) {
-			if(auto cap = msg.matchFirst(tup[0]))
-			{
-				tup[1](cap);
-				return;
-			}
-		});
-	}
+                auto tid = (com in workers);
+                if(tid !is null) (*tid).send(WorkersArgument.make(arg));
+            })
+        ].each!((tup) {
+            if(auto cap = msg.matchFirst(tup[0]))
+            {
+                tup[1](cap);
+                return;
+            }
+        });
+    }
 
-	for(auto loop = true; loop;)
-		receive(
-			(immutable ReadMessage message) { receiveMessage(message.msg); },
-			(Tid tid, Terminate _t) {
-				if(tid == owner)
-				{
-					workers.values.each!(c => c.prioritySend(thisTid, TERMINATE));
-					loop = false;
-				}
-			}
-		);
+    for(auto loop = true; loop;)
+        receive(
+            (immutable ReadMessage message) { receiveMessage(message.msg); },
+            (Tid tid, Terminate _t) {
+                if(tid == owner)
+                {
+                    workers.values.each!(c => c.prioritySend(thisTid, TERMINATE));
+                    loop = false;
+                }
+            }
+                        );
 }
 
 struct RunCommand {}
 enum RUNCOMMAND = RunCommand();
 
 class WorkersArgument {
-	string arg;
+    string arg;
 
-	this(string arg) immutable
-	{
-		this.arg = arg;
-	}
+    this(string arg) immutable
+    {
+        this.arg = arg;
+    }
 
-	static auto make(string arg)
-	{
-		return new immutable(WorkersArgument)(arg);
-	}
+    static auto make(string arg)
+    {
+        return new immutable(WorkersArgument)(arg);
+    }
 }
