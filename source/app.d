@@ -6,8 +6,8 @@ import ohm.actors.io, ohm.actors.admin;
 
 void main()
 {
-    auto ioHolder = spawn(&ioHolder, thisTid);
-    auto actorsAdmin = spawn(&actorsAdmin, thisTid, ioHolder);
+    auto ioHolder = spawn(&ioHolder);
+    auto actorsAdmin = spawn(&actorsAdmin, ioHolder);
 
     for(auto loop = true; loop;)
         receive(

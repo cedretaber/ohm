@@ -4,18 +4,18 @@ import std.stdio, std.string, std.concurrency, std.algorithm.searching, std.algo
 
 import ohm.app;
 
-void ioHolder(Tid owner)
+void ioHolder()
 {
-    auto writer = spawn(&ioWriter, thisTid);
-    auto reader = spawn(&ioReader, thisTid);
+    auto writer = spawn(&ioWriter);
+    auto reader = spawn(&ioReader);
 
     for(auto loop = true; loop;)
         receive(
             (immutable WritingMessage msg) { writer.send(msg); },
-            (immutable ReadMessage msg) { owner.send(msg); },
-            (Tid tid, ReadContinue readContinue) { if(tid == owner) reader.send(thisTid, readContinue); },
+            (immutable ReadMessage msg) { ownerTid.send(msg); },
+            (Tid tid, ReadContinue rc) { if(tid == ownerTid) reader.send(thisTid, rc); },
             (Tid tid, Terminate terminate) {
-                if(tid == owner)
+                if(tid == ownerTid)
                 {
                     writer.prioritySend(thisTid, terminate);
                     reader.prioritySend(thisTid, terminate);
@@ -25,38 +25,44 @@ void ioHolder(Tid owner)
         );
 }
 
-void ioWriter(Tid owner)
+void ioWriter()
 {
     for(auto loop = true; loop;)
         receive(
             (immutable WritingMessage msg) { writeln(msg.msg); },
-            (Tid tid, Terminate _t) { if(tid == owner) loop = false; }
+            (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; }
         );
 }
 
-void ioReader(Tid owner)
+void ioReader()
 {
     for(auto loop = true; loop;)
     {
-        owner.send(ReadMessage.make(readln.chomp));
+        ownerTid.send(ReadMessage.make(readln.chomp));
         for(auto innerLoop = true; innerLoop;)
             receive(
-                (Tid tid, ReadContinue _r) {if(tid == owner) innerLoop = false;},
-                (Tid tid, Terminate _t) {if(tid == owner) loop = innerLoop = false;}
+                (Tid tid, ReadContinue _r) {if(tid == ownerTid) innerLoop = false;},
+                (Tid tid, Terminate _t) {if(tid == ownerTid) loop = innerLoop = false;}
             );
     }
 }
 
 immutable abstract
-class IOMessage {}
-
-template Constractors()
+class IOMessage
 {
     string msg;
 
-    this(string msg = "")
+    this(string msg)
     {
         this.msg = msg;
+    }
+}
+
+template Constractors()
+{
+    this(string msg = "")
+    {
+        super(msg);
     }
 
     static auto make(string msg)
@@ -65,11 +71,13 @@ template Constractors()
     }
 }
 
+immutable
 class WritingMessage : IOMessage
 {
     mixin Constractors;
 }
 
+immutable
 class ReadMessage : IOMessage
 {
     mixin Constractors;

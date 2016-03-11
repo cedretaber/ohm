@@ -1,31 +1,36 @@
 module ohm.actors.admin;
 
-import std.concurrency, std.array, std.regex, std.variant, std.typecons, std.algorithm.searching, std.algorithm.iteration;
+import
+    std.concurrency, std.array, std.regex, std.variant,
+    std.typecons, std.algorithm.searching, std.algorithm.iteration;
 
-import ohm.app, ohm.actors.io, ohm.actors.workers.pingpong;
+// import std.stdio;
+
+import ohm.app, ohm.actors.io, ohm.actors.workers;
 
 enum keywords = "exit quit echo ping set delete count timer".split(" ");
 
-enum setState = ctRegex!(r"^set (\w+) (.*)$");
+enum setState = ctRegex!(r"^set (\w+) (.+)$");
 enum deleteState = ctRegex!(r"^delete (\w+)$");
 enum commandState1 = ctRegex!(r"^\w+$");
 enum commandState2 = ctRegex!(r"^(\w+) (\w+)$");
 
 alias Capt = Captures!(string, size_t);
 
-void actorsAdmin(Tid owner, Tid ioHolder)
+void actorsAdmin(Tid ioHolder)
 {
         auto workers = [
-                "ping": spawn(&pingPong, thisTid, ioHolder),
-                "count": spawn(&countWorker, thisTid, ioHolder),
-                "timer": spawn(&timerWorker, thisTid, ioHolder)
+            "ping": spawn(&pingPong, ioHolder),
+            "count": spawn(&countWorker, ioHolder),
+            "timer": spawn(&timerWorker, ioHolder),
+            "echo": spawn(&echoWorker, ioHolder)
         ];
 
     void receiveMessage(string msg)
     {
         bool isKeywordOrDeleteIfExist(string com)
         {
-            if(keywords.find(com)) return true;
+            if(keywords.any!(e => e == com)) return true;
 
             auto tid = (com in workers);
             if(tid !is null)
@@ -41,17 +46,7 @@ void actorsAdmin(Tid owner, Tid ioHolder)
                 auto com = c[1];
                 if(isKeywordOrDeleteIfExist(com)) return;
 
-                workers[com] = spawn(
-                    (Tid owner, Tid ioHolder, string msg) {
-                        for(auto loop = true; loop;)
-                            receive(
-                                (Tid tid, RunCommand _rc) { if(tid == owner) ioHolder.send(WritingMessage.make(msg)); },
-                                (Tid tid, Terminate _t) { if(tid == owner) loop = false; },
-                                (Variant any) {}
-                            );
-                    },
-                    thisTid, ioHolder, c[2]
-                );
+                workers[com] = spawn(&speaker, ioHolder, c[2]);
             }),
             tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
             tuple(commandState1, (Capt c) {
@@ -79,18 +74,19 @@ void actorsAdmin(Tid owner, Tid ioHolder)
         receive(
             (immutable ReadMessage message) { receiveMessage(message.msg); },
             (Tid tid, Terminate _t) {
-                if(tid == owner)
+                if(tid == ownerTid)
                 {
                     workers.values.each!(c => c.prioritySend(thisTid, TERMINATE));
                     loop = false;
                 }
             }
-                        );
+        );
 }
 
 struct RunCommand {}
 enum RUNCOMMAND = RunCommand();
 
+immutable
 class WorkersArgument {
     string arg;
 
