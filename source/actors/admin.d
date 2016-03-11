@@ -13,7 +13,8 @@ enum keywords = "exit quit echo ping set delete count timer".split(" ");
 enum setState = ctRegex!(r"^set (\w+) (.+)$");
 enum deleteState = ctRegex!(r"^delete (\w+)$");
 enum commandState1 = ctRegex!(r"^\w+$");
-enum commandState2 = ctRegex!(r"^(\w+) (\w+)$");
+enum commandState2 = ctRegex!(r"^(\w+) (.+)$");
+enum commandNumber = ctRegex!(r"^(\w+) (\d+)$");
 
 alias Capt = Captures!(string, size_t);
 
