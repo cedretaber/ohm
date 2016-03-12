@@ -13,7 +13,3 @@ void pingPong(Tid ioHolder)
             (Variant any) {}
         );
 }
-
-void countWorker(Tid ioHolder) {}
-
-void timerWorker(Tid ioHolder) {}

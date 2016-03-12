@@ -20,12 +20,10 @@ alias Capt = Captures!(string, size_t);
 
 void actorsAdmin(Tid ioHolder)
 {
-        auto workers = [
-            "ping": spawn(&pingPong, ioHolder),
-            "count": spawn(&countWorker, ioHolder),
-            "timer": spawn(&timerWorker, ioHolder),
-            "echo": spawn(&echoWorker, ioHolder)
-        ];
+    auto workers = [
+        "ping": spawn(&pingPong, ioHolder),
+        "echo": spawn(&echoWorker, ioHolder)
+    ];
 
     void receiveMessage(string msg)
     {
@@ -87,17 +85,29 @@ void actorsAdmin(Tid ioHolder)
 struct RunCommand {}
 enum RUNCOMMAND = RunCommand();
 
+string constructor(string arg)
+{return "
+    string " ~ arg ~ ";
+
+    this(string " ~ arg ~ ") immutable
+    {
+    this." ~ arg ~ " = " ~ arg ~ ";
+    }
+
+    static auto make(string " ~ arg ~ ")
+    {
+    return new immutable(WorkersArgument)(" ~ arg ~ ");
+    }
+";}
+
 immutable
-class WorkersArgument {
-    string arg;
+class WorkersArgument
+{
+    mixin(constructor("arg"));
+}
 
-    this(string arg) immutable
-    {
-        this.arg = arg;
-    }
-
-    static auto make(string arg)
-    {
-        return new immutable(WorkersArgument)(arg);
-    }
+immutable
+class TerminatedSignal
+{
+    mixin(constructor("name"));
 }

@@ -58,7 +58,7 @@ class IOMessage
     }
 }
 
-template Constractors()
+template Constructors()
 {
     this(string msg = "")
     {
@@ -74,13 +74,13 @@ template Constractors()
 immutable
 class WritingMessage : IOMessage
 {
-    mixin Constractors;
+    mixin Constructors;
 }
 
 immutable
 class ReadMessage : IOMessage
 {
-    mixin Constractors;
+    mixin Constructors;
 }
 
 struct ReadContinue {}
