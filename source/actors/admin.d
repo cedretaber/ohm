@@ -4,17 +4,16 @@ import
     std.concurrency, std.array, std.regex, std.variant,
     std.typecons, std.algorithm.searching, std.algorithm.iteration;
 
-// import std.stdio;
-
 import ohm.app, ohm.actors.io, ohm.actors.workers;
 
 enum keywords = "exit quit echo ping set delete count timer".split(" ");
 
-enum setState = ctRegex!(r"^set (\w+) (.+)$");
-enum deleteState = ctRegex!(r"^delete (\w+)$");
-enum commandState1 = ctRegex!(r"^\w+$");
-enum commandState2 = ctRegex!(r"^(\w+) (.+)$");
-enum commandNumber = ctRegex!(r"^(\w+) (\d+)$");
+enum setState = ctRegex!r"^set (\w+) (.+)$";
+enum deleteState = ctRegex!r"^delete (\w+)$";
+enum timerState = ctRegex!r"^timer (.+)$";
+enum counterState = ctRegex!r"^counter (.+)$";
+enum commandState1 = ctRegex!r"^\w+$";
+enum commandState2 = ctRegex!r"^(\w+) (.+)$";
 
 alias Capt = Captures!(string, size_t);
 
@@ -22,7 +21,8 @@ void actorsAdmin(Tid ioHolder)
 {
     auto workers = [
         "ping": spawn(&pingPong, ioHolder),
-        "echo": spawn(&echoWorker, ioHolder)
+        "echo": spawn(&echoWorker, ioHolder),
+        "counter": spawn(&counterAdmin, ioHolder)
     ];
 
     void receiveMessage(string msg)
@@ -48,6 +48,7 @@ void actorsAdmin(Tid ioHolder)
                 workers[com] = spawn(&speaker, ioHolder, c[2]);
             }),
             tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
+            tuple(counterState, (Capt c) { workers["counter"].send(ReadMessage.make(c[1])); }),
             tuple(commandState1, (Capt c) {
                 auto com = c.hit;
                 auto tid = (com in workers);
