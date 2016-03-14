@@ -12,8 +12,7 @@ enum setState = ctRegex!r"^set (\w+) (.+)$";
 enum deleteState = ctRegex!r"^delete (\w+)$";
 enum timerState = ctRegex!r"^timer (.+)$";
 enum counterState = ctRegex!r"^counter (.+)$";
-enum commandState1 = ctRegex!r"^\w+$";
-enum commandState2 = ctRegex!r"^(\w+) (.+)$";
+enum commandState = ctRegex!r"^\w+$";
 
 alias Capt = Captures!(string, size_t);
 
@@ -22,7 +21,8 @@ void actorsAdmin(Tid ioHolder)
     auto workers = [
         "ping": spawn(&pingPong, ioHolder),
         "echo": spawn(&echoWorker, ioHolder),
-        "counter": spawn(&counterAdmin, ioHolder)
+        "counter": spawn(&counterHolder, ioHolder),
+        "timer": spawn(&timerHolder, ioHolder)
     ];
 
     void receiveMessage(string msg)
@@ -49,17 +49,11 @@ void actorsAdmin(Tid ioHolder)
             }),
             tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
             tuple(counterState, (Capt c) { workers["counter"].send(ReadMessage.make(c[1])); }),
-            tuple(commandState1, (Capt c) {
+            tuple(timerState, (Capt c) { workers["timer"].send(ReadMessage.make(c[1])); }),
+            tuple(commandState, (Capt c) {
                 auto com = c.hit;
                 auto tid = (com in workers);
                 if(tid !is null) (*tid).send(thisTid, RUNCOMMAND);
-            }),
-            tuple(commandState2, (Capt c) {
-                auto com = c[1];
-                auto arg = c[2];
-
-                auto tid = (com in workers);
-                if(tid !is null) (*tid).send(WorkersArgument.make(arg));
             })
         ].each!((tup) {
             if(auto cap = msg.matchFirst(tup[0]))
@@ -86,29 +80,18 @@ void actorsAdmin(Tid ioHolder)
 struct RunCommand {}
 enum RUNCOMMAND = RunCommand();
 
-string constructor(string arg)
-{return "
-    string " ~ arg ~ ";
-
-    this(string " ~ arg ~ ") immutable
-    {
-    this." ~ arg ~ " = " ~ arg ~ ";
-    }
-
-    static auto make(string " ~ arg ~ ")
-    {
-    return new immutable(WorkersArgument)(" ~ arg ~ ");
-    }
-";}
-
 immutable
 class WorkersArgument
 {
-    mixin(constructor("arg"));
-}
+    string arg;
 
-immutable
-class TerminatedSignal
-{
-    mixin(constructor("name"));
+    this(string arg) immutable
+    {
+    this.arg = arg;
+    }
+
+    static auto make(string arg)
+    {
+    return new immutable(WorkersArgument)(arg);
+    }
 }

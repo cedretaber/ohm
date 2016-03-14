@@ -8,7 +8,7 @@ import ohm.app, ohm.actors.io, ohm.actors.admin;
 enum startReg = ctRegex!r"^start (\d+)$";
 enum stopReg = ctRegex!r"^stop$";
 
-void counterAdmin(Tid ioHolder)
+void counterHolder(Tid ioHolder)
 {
     bool hasCounter;
     Tid counter;
@@ -53,8 +53,7 @@ void countWorker(Tid ioHolder, int cnt)
         ioHolder.send(WritingMessage.make(cnt.to!string));
         receiveTimeout(
             1.dur!"seconds",
-            (Tid tid, Terminate _t) { if(tid == ownerTid) cnt = 0; },
-            (Variant any) {}
+            (Tid tid, Terminate _t) { if(tid == ownerTid) cnt = 0; }
         );
     }
 }
