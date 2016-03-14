@@ -6,7 +6,7 @@ import
 
 import ohm.app, ohm.actors.io, ohm.actors.workers;
 
-enum keywords = "exit quit echo ping set delete count timer".split(" ");
+enum keywords = "exit quit echo ping set delete counter timer".split(" ");
 
 enum setState = ctRegex!r"^set (\w+) (.+)$";
 enum deleteState = ctRegex!r"^delete (\w+)$";

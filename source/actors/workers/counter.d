@@ -17,7 +17,6 @@ void counterAdmin(Tid ioHolder)
     {
         if(hasCounter) counter.prioritySend(thisTid, TERMINATE);
         hasCounter = false;
-        import std.stdio; writeln("stop counter...");
     }
 
     for(auto loop = true; loop;)
@@ -27,9 +26,8 @@ void counterAdmin(Tid ioHolder)
                 {
                     if(auto cap = msg.matchFirst(startReg))
                     {
-                        import std.stdio; writeln("start counter...");
                         stopIfExist();
-                        spawnLinked(&countWorker, ioHolder, cap[1].to!int);
+                        counter = spawnLinked(&countWorker, ioHolder, cap[1].to!int);
                         hasCounter = true;
                     }
                     else if(msg.matchFirst(stopReg))
@@ -55,7 +53,7 @@ void countWorker(Tid ioHolder, int cnt)
         ioHolder.send(WritingMessage.make(cnt.to!string));
         receiveTimeout(
             1.dur!"seconds",
-            (Tid tid, Terminate _t) { import std.stdio; writeln("I'll terminate!"); if(tid == ownerTid) cnt = 0; },
+            (Tid tid, Terminate _t) { if(tid == ownerTid) cnt = 0; },
             (Variant any) {}
         );
     }
