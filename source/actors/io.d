@@ -11,8 +11,8 @@ void ioHolder()
 
     for(auto loop = true; loop;)
         receive(
-            (immutable WritingMessage msg) { writer.send(msg); },
-            (immutable ReadMessage msg) { ownerTid.send(msg); },
+            (WritingMessage msg) { writer.send(msg); },
+            (ReadMessage msg) { ownerTid.send(msg); },
             (Tid tid, ReadContinue rc) { if(tid == ownerTid) reader.send(thisTid, rc); },
             (Tid tid, Terminate terminate) {
                 if(tid == ownerTid)
@@ -29,7 +29,7 @@ void ioWriter()
 {
     for(auto loop = true; loop;)
         receive(
-            (immutable WritingMessage msg) { writeln(msg.msg); },
+            (WritingMessage msg) { writeln(msg.msg); },
             (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; }
         );
 }
@@ -38,7 +38,7 @@ void ioReader()
 {
     for(auto loop = true; loop;)
     {
-        ownerTid.send(ReadMessage.make(readln.chomp));
+        ownerTid.send(new ReadMessage(readln.chomp));
         for(auto innerLoop = true; innerLoop;)
             receive(
                 (Tid tid, ReadContinue _r) {if(tid == ownerTid) innerLoop = false;},
@@ -64,24 +64,21 @@ template Constructors()
     {
         super(msg);
     }
-
-    static auto make(string msg)
-    {
-        return new immutable(typeof(this))(msg);
-    }
 }
 
 immutable
-class WritingMessage : IOMessage
+class MutableWritingMessage : IOMessage
 {
     mixin Constructors;
 }
+alias WritingMessage = immutable MutableWritingMessage;
 
 immutable
-class ReadMessage : IOMessage
+class MutableReadMessage : IOMessage
 {
     mixin Constructors;
 }
+alias ReadMessage = immutable MutableReadMessage;
 
 struct ReadContinue {}
 enum READCONTINUE = ReadContinue();

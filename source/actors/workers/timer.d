@@ -15,17 +15,17 @@ void timerHolder(Tid ioHolder)
 
     for(auto loop = true; loop;)
         receive(
-            (immutable ReadMessage rm) {
+            (ReadMessage rm) {
                 with(rm)
                 {
                     if(auto cap = msg.matchFirst(counterReg))
                     {
-                        auto timer = new immutable(Timer)(cap[1].to!int, cap[2]);
+                        auto timer = new Timer(cap[1].to!int, cap[2]);
                         table[timer] = spawn(timer, ioHolder);
                     }
                 }
             },
-            (immutable Timer timer) {
+            (Timer timer) {
                 if((timer in table) !is null)
                 {
                     table[timer].send(thisTid, TERMINATE);
@@ -40,7 +40,7 @@ void timerHolder(Tid ioHolder)
 }
 
 immutable
-class Timer
+class MutableTimer
 {
     long len;
     string msg;
@@ -51,13 +51,14 @@ class Timer
         this.msg = msg;
     }
 
-    void opCall(Tid ioHolder)
+    void opCall(Tid ioHolder) immutable
     {
         receiveTimeout(
             len.dur!"seconds",
             (Tid tid, Terminate _t) { if(tid == ownerTid) return; }
         );
-        ioHolder.send(WritingMessage.make(msg));
+        ioHolder.send(new WritingMessage(msg));
         ownerTid.send(this);
     }
 }
+alias Timer = immutable MutableTimer;

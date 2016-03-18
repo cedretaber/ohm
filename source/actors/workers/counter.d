@@ -21,7 +21,7 @@ void counterHolder(Tid ioHolder)
 
     for(auto loop = true; loop;)
         receive(
-            (immutable ReadMessage rm) {
+            (ReadMessage rm) {
                 with(rm)
                 {
                     if(auto cap = msg.matchFirst(startReg))
@@ -50,7 +50,7 @@ void countWorker(Tid ioHolder, int cnt)
 {
     while(cnt-- > 0)
     {
-        ioHolder.send(WritingMessage.make(cnt.to!string));
+        ioHolder.send(new WritingMessage(cnt.to!string));
         receiveTimeout(
             1.dur!"seconds",
             (Tid tid, Terminate _t) { if(tid == ownerTid) cnt = 0; }

@@ -8,7 +8,7 @@ void pingPong(Tid ioHolder)
 {
     for(auto loop = true; loop;)
         receive(
-            (Tid tid, RunCommand _rc) { if(tid == ownerTid) ioHolder.send(WritingMessage.make("pong!")); },
+            (Tid tid, RunCommand _rc) { if(tid == ownerTid) ioHolder.send(new WritingMessage("pong!")); },
             (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; },
             (Variant any) {}
         );

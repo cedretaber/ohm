@@ -49,9 +49,9 @@ void actorsAdmin(Tid ioHolder)
                 workers[com] = spawn(&speaker, ioHolder, c[2]);
             }),
             tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
-            tuple(echoState, (Capt c) { workers["echo"].send(WorkersArgument.make(c[1])); }),
-            tuple(counterState, (Capt c) { workers["counter"].send(ReadMessage.make(c[1])); }),
-            tuple(timerState, (Capt c) { workers["timer"].send(ReadMessage.make(c[1])); }),
+            tuple(echoState, (Capt c) { workers["echo"].send(new WorkersArgument(c[1])); }),
+            tuple(counterState, (Capt c) { workers["counter"].send(new ReadMessage(c[1])); }),
+            tuple(timerState, (Capt c) { workers["timer"].send(new ReadMessage(c[1])); }),
             tuple(commandState, (Capt c) {
                 auto com = c.hit;
                 auto tid = (com in workers);
@@ -68,7 +68,7 @@ void actorsAdmin(Tid ioHolder)
 
     for(auto loop = true; loop;)
         receive(
-            (immutable ReadMessage message) { receiveMessage(message.msg); },
+            (ReadMessage message) { receiveMessage(message.msg); },
             (Tid tid, Terminate _t) {
                 if(tid == ownerTid)
                 {
@@ -83,7 +83,7 @@ struct RunCommand {}
 enum RUNCOMMAND = RunCommand();
 
 immutable
-class WorkersArgument
+class MutableWorkersArgument
 {
     string arg;
 
@@ -91,9 +91,5 @@ class WorkersArgument
     {
         this.arg = arg;
     }
-
-    static auto make(string arg)
-    {
-        return new immutable(WorkersArgument)(arg);
-    }
 }
+alias WorkersArgument = immutable MutableWorkersArgument;
