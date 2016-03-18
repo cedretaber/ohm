@@ -9,4 +9,5 @@ __dummy.html
 *.sln
 *.o
 *.obj
+*.iml
 ohm
