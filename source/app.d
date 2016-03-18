@@ -11,7 +11,7 @@ void main()
 
     for(auto loop = true; loop;)
         receive(
-            (immutable ReadMessage message) {
+            (ReadMessage message) {
                 with(message)
                 {
                     if(msg == "exit" || msg == "quit")
