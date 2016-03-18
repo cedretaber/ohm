@@ -11,7 +11,7 @@ enum counterReg = ctRegex!r"^(\d+) (.+)$";
 
 void timerHolder(Tid ioHolder)
 {
-    Tid[immutable Timer] table;
+    Tid[Timer] table;
 
     for(auto loop = true; loop;)
         receive(
