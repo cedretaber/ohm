@@ -10,6 +10,7 @@ enum keywords = "exit quit echo ping set delete counter timer".split(" ");
 
 enum setState = ctRegex!r"^set (\w+) (.+)$";
 enum deleteState = ctRegex!r"^delete (\w+)$";
+enum echoState = ctRegex!r"^echo (.+)$";
 enum timerState = ctRegex!r"^timer (.+)$";
 enum counterState = ctRegex!r"^counter (.+)$";
 enum commandState = ctRegex!r"^\w+$";
@@ -48,6 +49,7 @@ void actorsAdmin(Tid ioHolder)
                 workers[com] = spawn(&speaker, ioHolder, c[2]);
             }),
             tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
+            tuple(echoState, (Capt c) { workers["echo"].send(WorkersArgument.make(c[1])); }),
             tuple(counterState, (Capt c) { workers["counter"].send(ReadMessage.make(c[1])); }),
             tuple(timerState, (Capt c) { workers["timer"].send(ReadMessage.make(c[1])); }),
             tuple(commandState, (Capt c) {
@@ -87,11 +89,11 @@ class WorkersArgument
 
     this(string arg) immutable
     {
-    this.arg = arg;
+        this.arg = arg;
     }
 
     static auto make(string arg)
     {
-    return new immutable(WorkersArgument)(arg);
+        return new immutable(WorkersArgument)(arg);
     }
 }
