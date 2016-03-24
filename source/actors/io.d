@@ -1,6 +1,6 @@
 module ohm.actors.io;
 
-import std.stdio, std.string, std.concurrency, std.algorithm.searching, std.algorithm.iteration;
+import std.stdio, std.string, std.concurrency, std.algorithm.searching, std.algorithm.iteration, std.variant;
 
 import ohm.app;
 
@@ -14,15 +14,10 @@ void ioHolder()
             (WritingMessage msg) { writer.send(msg); },
             (ReadMessage msg) { ownerTid.send(msg); },
             (Tid tid, ReadContinue rc) { if(tid == ownerTid) reader.send(thisTid, rc); },
-            (Tid tid, Terminate terminate) {
-                if(tid == ownerTid)
-                {
-                    writer.prioritySend(thisTid, terminate);
-                    reader.prioritySend(thisTid, terminate);
-                    loop = false;
-                }
-            }
+            (Tid tid, Terminate terminate) { if(tid == ownerTid) loop = false; }
         );
+
+    [writer, reader].each!(c => c.prioritySend(thisTid, TERMINATE));
 }
 
 void ioWriter()
@@ -41,8 +36,9 @@ void ioReader()
         ownerTid.send(new ReadMessage(readln.chomp));
         for(auto innerLoop = true; innerLoop;)
             receive(
-                (Tid tid, ReadContinue _r) {if(tid == ownerTid) innerLoop = false;},
-                (Tid tid, Terminate _t) {if(tid == ownerTid) loop = innerLoop = false;}
+                (Tid tid, ReadContinue _r) { if(tid == ownerTid) innerLoop = false; },
+                (Tid tid, Terminate _t) { if(tid == ownerTid) loop = innerLoop = false; },
+                (Variant _any) {}
             );
     }
 }

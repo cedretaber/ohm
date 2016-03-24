@@ -33,7 +33,7 @@ void timerHolder(Tid ioHolder)
                 }
             },
             (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; },
-            (Variant any) {}
+            (Variant _any) {}
         );
 
     table.values.each!(c => c.prioritySend(thisTid, TERMINATE));

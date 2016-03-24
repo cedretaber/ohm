@@ -10,6 +10,6 @@ void pingPong(Tid ioHolder)
         receive(
             (Tid tid, RunCommand _rc) { if(tid == ownerTid) ioHolder.send(new WritingMessage("pong!")); },
             (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; },
-            (Variant any) {}
+            (Variant _any) {}
         );
 }

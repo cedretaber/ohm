@@ -10,6 +10,6 @@ void echoWorker(Tid ioHolder)
         receive(
             (WorkersArgument arg) { ioHolder.send(new WritingMessage(arg.arg)); },
             (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; },
-            (Variant any) {}
+            (Variant _any) {}
         );
 }

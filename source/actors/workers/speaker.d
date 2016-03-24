@@ -9,6 +9,6 @@ void speaker(Tid ioHolder, string msg) {
         receive(
             (Tid tid, RunCommand _rc) { if(tid == ownerTid) ioHolder.send(new WritingMessage(msg)); },
             (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; },
-            (Variant any) {}
+            (Variant _any) {}
         );
 }

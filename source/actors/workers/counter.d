@@ -42,7 +42,7 @@ void counterHolder(Tid ioHolder)
                 }
             },
             (LinkTerminated _lt) { hasCounter = false; },
-            (Variant any) {}
+            (Variant _any) {}
         );
 }
 

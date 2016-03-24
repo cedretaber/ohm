@@ -69,14 +69,10 @@ void actorsAdmin(Tid ioHolder)
     for(auto loop = true; loop;)
         receive(
             (ReadMessage message) { receiveMessage(message.msg); },
-            (Tid tid, Terminate _t) {
-                if(tid == ownerTid)
-                {
-                    workers.values.each!(c => c.prioritySend(thisTid, TERMINATE));
-                    loop = false;
-                }
-            }
+            (Tid tid, Terminate _t) { if(tid == ownerTid) loop = false; }
         );
+
+    workers.values.each!(c => c.prioritySend(thisTid, TERMINATE));
 }
 
 struct RunCommand {}
