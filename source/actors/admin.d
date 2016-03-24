@@ -29,27 +29,25 @@ void actorsAdmin(Tid ioHolder)
 
     void receiveMessage(string msg)
     {
-        bool isKeywordOrDeleteIfExist(string com)
+        void deleteIfExist(string com)
         {
-            if(keywords.any!(e => e == com)) return true;
-
             auto tid = (com in workers);
             if(tid !is null)
             {
                 workers.remove(com);
                 (*tid).prioritySend(thisTid, TERMINATE);
             }
-            return false;
         }
 
         [
             t(setState, (Capt c) {
                 auto com = c[1];
-                if(isKeywordOrDeleteIfExist(com)) return;
+                if(keywords.any!(e => e == com)) return;
 
+                deleteIfExist(com);
                 workers[com] = spawn(&speaker, ioHolder, c[2]);
             }),
-            t(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
+            t(deleteState, (Capt c) { deleteIfExist(c[1]); }),
             t(echoState, (Capt c) { workers["echo"].send(new WorkersArgument(c[1])); }),
             t(counterState, (Capt c) { workers["counter"].send(new ReadMessage(c[1])); }),
             t(timerState, (Capt c) { workers["timer"].send(new ReadMessage(c[1])); }),
