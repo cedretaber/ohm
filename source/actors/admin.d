@@ -16,6 +16,7 @@ enum counterState = ctRegex!r"^counter (.+)$";
 enum commandState = ctRegex!r"^\w+$";
 
 alias Capt = Captures!(string, size_t);
+alias t = tuple;
 
 void actorsAdmin(Tid ioHolder)
 {
@@ -42,17 +43,17 @@ void actorsAdmin(Tid ioHolder)
         }
 
         [
-            tuple(setState, (Capt c) {
+            t(setState, (Capt c) {
                 auto com = c[1];
                 if(isKeywordOrDeleteIfExist(com)) return;
 
                 workers[com] = spawn(&speaker, ioHolder, c[2]);
             }),
-            tuple(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
-            tuple(echoState, (Capt c) { workers["echo"].send(new WorkersArgument(c[1])); }),
-            tuple(counterState, (Capt c) { workers["counter"].send(new ReadMessage(c[1])); }),
-            tuple(timerState, (Capt c) { workers["timer"].send(new ReadMessage(c[1])); }),
-            tuple(commandState, (Capt c) {
+            t(deleteState, (Capt c) { isKeywordOrDeleteIfExist(c[1]); }),
+            t(echoState, (Capt c) { workers["echo"].send(new WorkersArgument(c[1])); }),
+            t(counterState, (Capt c) { workers["counter"].send(new ReadMessage(c[1])); }),
+            t(timerState, (Capt c) { workers["timer"].send(new ReadMessage(c[1])); }),
+            t(commandState, (Capt c) {
                 auto com = c.hit;
                 auto tid = (com in workers);
                 if(tid !is null) (*tid).send(thisTid, RUNCOMMAND);
